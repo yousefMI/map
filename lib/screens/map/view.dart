@@ -44,7 +44,9 @@ class _MyMapState extends State<MyMap> {
             padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: 10, vertical: 10),
             child: TextFormField(
-              onChanged: (value) async {
+              decoration: const InputDecoration(
+                  filled: true, fillColor: Colors.white, hintText: "Search"),
+              onFieldSubmitted: (value) async {
                 final resp = await Dio().get(
                     "https://api.openrouteservice.org/geocode/search?api_key=5b3ce3597851110001cf62489d579e9c9f3141f89eb7dfc4b2705bf8&text=$value&boundary.country=EG&size=360");
                 final model = SearchData.fromJson(resp.data);

@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.search_code">
+    <uses-permission android:name="android.permission.INTERNET" />
    <application
         android:label="search_code"
         android:name="${applicationName}"
@@ -30,5 +31,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+       <meta-data android:name="com.google.android.geo.API_KEY"
+           android:value="AIzaSyCc-oBxZ6p7IsdS_qdKfMXbjF5dClj3WL0"/>
     </application>
 </manifest>

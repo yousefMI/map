@@ -1,9 +1,11 @@
 import 'dart:async';
-
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:search_code/screens/map/model.dart';
+import 'package:search_code/screens/map/model1.dart';
 
 class MyMap extends StatefulWidget {
   const MyMap({Key? key}) : super(key: key);
@@ -13,18 +15,73 @@ class MyMap extends StatefulWidget {
 }
 
 class _MyMapState extends State<MyMap> {
+  late Position cl;
+  late double x,y;
+  late StreamSubscription<Position> positionStream;
+
+  Future getPostion() async {
+    bool services;
+    LocationPermission per;
+    services = await Geolocator.isLocationServiceEnabled();
+    if (services == false) {
+      AwesomeDialog(
+          context: context,
+          title: "services",
+          body: Text("Services is not Enabled"))
+        ..show();
+    }
+    per = await Geolocator.checkPermission();
+    if (per == LocationPermission.denied) {
+      per = await Geolocator.requestPermission();
+      if (per == LocationPermission.always) {
+        getLatLong();
+      }
+    }
+  }
+
+  Future<Position> getLatLong() async {
+    cl = await Geolocator.getCurrentPosition().then((value) => value);
+    setState(() {});
+    return cl;
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getPostion();
+    polylines;
+    positionStream = Geolocator.getPositionStream().listen(
+            (Position? position) {
+              changeMarker(position!.latitude, position.longitude);
+              x=position.latitude;
+              y=position.longitude;
+        });
+  }
+
   final completer = Completer<GoogleMapController>();
   static const CameraPosition cairo = CameraPosition(
     target: LatLng(30.0596113, 31.3408666),
     zoom: 8,
   );
   Set<Marker> markers = {};
+  Set<Polyline> polylines = {};
+  changeMarker(lat,long){
+    markers.remove(Marker(markerId: MarkerId("Location")));
+    markers.add(Marker(icon: BitmapDescriptor.defaultMarkerWithHue(
+        BitmapDescriptor.hueGreen),markerId: MarkerId("Location"),position: LatLng(lat, long)));
+   // goTo(lat, long);
+    setState(() {
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(children: [
         GoogleMap(
+          polylines: polylines,
           markers: markers,
           onTap: (argument) {
             markers.add(Marker(
@@ -63,14 +120,23 @@ class _MyMapState extends State<MyMap> {
                     model.results.length,
                     (index) => PopupMenuItem(
                       child: Text(model.results[index].name),
-                      onTap: () {
+                      onTap: () async {
                         markers.add(Marker(
-                            markerId: MarkerId(model.results[index].name),
+                            markerId: MarkerId("1"),
                             position: LatLng(
                                 model.results[index].lat.toDouble(),
                                 model.results[index].lng.toDouble())));
                         goTo(model.results[index].lat.toDouble(),
                             model.results[index].lng.toDouble());
+                          final dis = await Dio().get(
+                              "https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf62489d579e9c9f3141f89eb7dfc4b2705bf8&start=${y},${x}&end=${markers.last.position.longitude},${markers.last.position.latitude}");
+                          final model1 = DrawLineData.fromJson(dis.data);
+                          polylines.add(Polyline(
+                              polylineId: PolylineId("ds"),
+                              color: Colors.blueAccent,
+                              width: 10,
+                              points: model1.listOfPoints));
+                          setState(() {});
                       },
                     ),
                   ),
